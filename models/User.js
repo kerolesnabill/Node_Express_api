@@ -44,6 +44,10 @@ const userSchema = new Schema({
     type: String,
     maxlength: 50,
   },
+  photo: {
+    type: String,
+    default: "default.jpg",
+  },
 });
 
 userSchema.methods.generateAuthToken = function () {
@@ -61,6 +65,7 @@ function validateUser(user) {
     password: Joi.string().min(5).max(255).required(),
     location: Joi.string().min(2).max(50),
     bio: Joi.string().min(1).max(50),
+    photo: Joi.string(),
   });
 
   return schema.validate(user);
@@ -75,6 +80,7 @@ function validateUserUpdate(user) {
     password: Joi.string().min(5).max(255),
     location: Joi.string().min(2).max(50),
     bio: Joi.string().min(1).max(50),
+    photo: Joi.string(),
   });
 
   return schema.validate(user);

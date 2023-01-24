@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const _ = require("lodash");
 const router = express.Router();
 const auth = require("../middleware/auth");
+const { upload, resize } = require("../middleware/upload");
 const { User, validate, validateUpdate } = require("../models/User");
 
 router.post("/", async (req, res) => {
@@ -43,7 +44,7 @@ router.post("/", async (req, res) => {
     .send(_.pick(user, ["_id", "firstName", "lastName", "username", "email"]));
 });
 
-router.patch("/me", auth, async (req, res) => {
+router.patch("/me", auth, upload, resize, async (req, res) => {
   const { error } = validateUpdate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -54,6 +55,8 @@ router.patch("/me", auth, async (req, res) => {
   if (user) return res.status(400).send("username already used.");
 
   user = req.body;
+
+  if (req.file) user.photo = req.file.filename;
 
   if (user.password) user.password = await bcrypt.hash(user.password, 10);
 
