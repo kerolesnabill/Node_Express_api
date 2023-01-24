@@ -6,6 +6,20 @@ const auth = require("../middleware/auth");
 const { upload, resize } = require("../middleware/upload");
 const { User, validate, validateUpdate } = require("../models/User");
 
+router.get("/", auth, async (req, res) => {
+  let users = await User.find().select({
+    firstName: 1,
+    lastName: 1,
+    username: 1,
+    photo: 1,
+  });
+
+  users = users.filter((user) => user._id != req.user._id);
+  if (users.length < 1) return res.send("No users were found.");
+
+  res.send(users);
+});
+
 router.post("/", async (req, res) => {
   // Check if the user is existing
   let user = await User.findOne({ email: req.body.email });
@@ -44,6 +58,13 @@ router.post("/", async (req, res) => {
     .send(_.pick(user, ["_id", "firstName", "lastName", "username", "email"]));
 });
 
+router.get("/me", auth, async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password");
+  if (!user) return res.send("User not found.");
+
+  res.send(user);
+});
+
 router.patch("/me", auth, upload, resize, async (req, res) => {
   const { error } = validateUpdate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
@@ -65,6 +86,13 @@ router.patch("/me", auth, upload, resize, async (req, res) => {
   }).select("-password");
 
   res.send(user);
+});
+
+router.delete("/me", auth, async (req, res) => {
+  const user = await User.findByIdAndDelete(req.user._id);
+  if (!user) return res.send("The user is already deleted.");
+
+  res.send("The user was deleted successfully.");
 });
 
 module.exports = router;
