@@ -1,0 +1,31 @@
+{
+  "name": "node_express_api",
+  "version": "1.0.0",
+  "description": "Social media API with Node and Express",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kerolesnabill/Node_Express_api.git"
+  },
+  "keywords": [],
+  "author": "Keroles Nabil",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kerolesnabill/Node_Express_api/issues"
+  },
+  "homepage": "https://github.com/kerolesnabill/Node_Express_api#readme",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "joi": "^17.7.0",
+    "mongoose": "^6.8.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
