@@ -163,7 +163,7 @@ router.delete("/:postId/:commentId", auth, async (req, res) => {
       .status(404)
       .send("There is no comment with id: " + req.params.commentId);
 
-  if (comment.userId != req.user._id && comment.userId != post._id)
+  if (comment.userId != req.user._id && comment.userId != post.userId)
     return res.send("You are not allowed to delete this comment.");
 
   const commentIndex = post.comments.indexOf(comment);
@@ -171,6 +171,114 @@ router.delete("/:postId/:commentId", auth, async (req, res) => {
 
   await post.save();
   res.send("Your comment has been deleted.");
+});
+
+// comment_replies => post - edit - delete
+router.post("/:postId/:commentId", auth, async (req, res) => {
+  let post = await Post.findById(req.params.postId);
+  if (!post)
+    return res
+      .status(404)
+      .send("There is no post with id: " + req.params.postId);
+
+  const comment = post.comments.find(
+    (comment) => comment._id == req.params.commentId
+  );
+
+  if (!comment)
+    return res
+      .status(404)
+      .send("There is no comment with id: " + req.params.commentId);
+
+  const { error } = validateComment(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
+  const newReplay = { content: req.body.comment, userId: req.user._id };
+
+  const commentIndex = post.comments.indexOf(comment);
+  post.comments[commentIndex].replies.push(newReplay);
+
+  await post.save();
+  res.send("Your reply was posted.");
+});
+
+router.patch("/:postId/:commentId/:replyId", auth, async (req, res) => {
+  let post = await Post.findById(req.params.postId);
+  if (!post)
+    return res
+      .status(404)
+      .send("There is no post with id: " + req.params.postId);
+
+  const comment = post.comments.find(
+    (comment) => comment._id == req.params.commentId
+  );
+
+  if (!comment)
+    return res
+      .status(404)
+      .send("There is no comment with id: " + req.params.commentId);
+
+  const commentIndex = post.comments.indexOf(comment);
+  const reply = post.comments[commentIndex].replies.find(
+    (reply) => reply._id == req.params.replyId
+  );
+
+  if (!reply)
+    return res
+      .status(404)
+      .send("There is no reply with id: " + req.params.replyId);
+
+  if (reply.userId != req.user._id)
+    return res.send("You are not allowed to edit this reply.");
+
+  const { error } = validateComment(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
+  const replyIndex = post.comments[commentIndex].replies.indexOf(reply);
+  post.comments[commentIndex].replies[replyIndex].content = req.body.comment;
+
+  await post.save();
+  res.send("Your reply was edited.");
+});
+
+router.delete("/:postId/:commentId/:replyId", auth, async (req, res) => {
+  let post = await Post.findById(req.params.postId);
+  if (!post)
+    return res
+      .status(404)
+      .send("There is no post with id: " + req.params.postId);
+
+  const comment = post.comments.find(
+    (comment) => comment._id == req.params.commentId
+  );
+
+  if (!comment)
+    return res
+      .status(404)
+      .send("There is no comment with id: " + req.params.commentId);
+
+  const commentIndex = post.comments.indexOf(comment);
+  const reply = post.comments[commentIndex].replies.find(
+    (reply) => reply._id == req.params.replyId
+  );
+
+  if (!reply)
+    return res
+      .status(404)
+      .send("There is no reply with id: " + req.params.replyId);
+
+  if (
+    post.userId != req.user._id &&
+    comment.userId != req.user._id &&
+    reply.userId != req.user._id
+  )
+    return res.send("You are not allowed to delete this reply.");
+
+  const replyIndex = post.comments[commentIndex].replies.indexOf(reply);
+  post.comments[commentIndex].replies.splice(replyIndex, 1);
+
+  await post.save();
+  res.send("Your reply was deleted.");
 });
 
 module.exports = router;

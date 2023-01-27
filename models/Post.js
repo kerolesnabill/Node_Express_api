@@ -2,7 +2,8 @@ const { Schema, model } = require("mongoose");
 const Joi = require("joi");
 
 const replaySchema = new Schema({
-  content: String,
+  content: { type: String, minlength: 1, maxlength: 1000 },
+  userId: String,
   createdAt: { type: Date, default: Date.now() },
 });
 
