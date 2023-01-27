@@ -7,8 +7,9 @@ const replaySchema = new Schema({
 });
 
 const commentSchema = new Schema({
-  content: String,
+  content: { type: String, minlength: 1, maxlength: 1000 },
   replies: [replaySchema],
+  userId: String,
   createdAt: { type: Date, default: Date.now() },
 });
 
@@ -54,6 +55,14 @@ function validatePostUpdate(post) {
   return schema.validate(post);
 }
 
+function validateComment(postComment) {
+  const schema = Joi.object({
+    comment: Joi.string().min(1).max(1000).required(),
+  });
+  return schema.validate(postComment);
+}
+
 exports.Post = Post;
 exports.validate = validatePost;
 exports.validateUpdate = validatePostUpdate;
+exports.validateComment = validateComment;

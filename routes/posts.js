@@ -2,7 +2,12 @@ const express = require("express");
 const _ = require("lodash");
 const router = express.Router();
 const auth = require("../middleware/auth");
-const { Post, validate, validateUpdate } = require("../models/Post");
+const {
+  Post,
+  validate,
+  validateUpdate,
+  validateComment,
+} = require("../models/Post");
 const { uploadPostImages, resizePostImages } = require("../middleware/upload");
 
 router.get("/", async (req, res) => {
@@ -75,7 +80,7 @@ router.delete("/:id", auth, async (req, res) => {
 });
 
 // Like - add or remove like for posts.
-router.get("/like/:postId", auth, async (req, res) => {
+router.patch("/:postId/like", auth, async (req, res) => {
   let post = await Post.findById(req.params.postId);
   if (!post)
     return res
@@ -93,6 +98,79 @@ router.get("/like/:postId", auth, async (req, res) => {
     await post.save();
     res.send(post.likes);
   }
+});
+
+// comments => post - edit - delete
+router.post("/:postId", auth, async (req, res) => {
+  let post = await Post.findById(req.params.postId);
+  if (!post)
+    return res
+      .status(404)
+      .send("There is no post with id: " + req.params.postId);
+
+  const { error } = validateComment(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
+  const newComment = { content: req.body.comment, userId: req.user._id };
+
+  post.comments.push(newComment);
+  await post.save();
+  res.send("Your comment has been posted.");
+});
+
+router.patch("/:postId/:commentId", auth, async (req, res) => {
+  let post = await Post.findById(req.params.postId);
+  if (!post)
+    return res
+      .status(404)
+      .send("There is no post with id: " + req.params.postId);
+
+  const comment = post.comments.find(
+    (comment) => comment._id == req.params.commentId
+  );
+
+  if (!comment)
+    return res
+      .status(404)
+      .send("There is no comment with id: " + req.params.commentId);
+
+  if (comment.userId != req.user._id)
+    return res.send("You are not allowed to edit this comment.");
+
+  const { error } = validateComment(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
+  const commentIndex = post.comments.indexOf(comment);
+  post.comments[commentIndex].content = req.body.comment;
+
+  await post.save();
+  res.send("Your comment has been edited.");
+});
+
+router.delete("/:postId/:commentId", auth, async (req, res) => {
+  let post = await Post.findById(req.params.postId);
+  if (!post)
+    return res
+      .status(404)
+      .send("There is no post with id: " + req.params.postId);
+
+  const comment = post.comments.find(
+    (comment) => comment._id == req.params.commentId
+  );
+
+  if (!comment)
+    return res
+      .status(404)
+      .send("There is no comment with id: " + req.params.commentId);
+
+  if (comment.userId != req.user._id && comment.userId != post._id)
+    return res.send("You are not allowed to delete this comment.");
+
+  const commentIndex = post.comments.indexOf(comment);
+  post.comments.splice(commentIndex, 1);
+
+  await post.save();
+  res.send("Your comment has been deleted.");
 });
 
 module.exports = router;
