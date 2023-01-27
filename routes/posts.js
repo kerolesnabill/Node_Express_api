@@ -69,9 +69,30 @@ router.delete("/:id", auth, async (req, res) => {
   if (req.user._id != post.userId)
     return res.status(400).send("You are not allowed to delete this post.");
 
-  post.delete();
+  await post.delete();
 
   res.status(200).send("The post was deleted successfully.");
+});
+
+// Like - add or remove like for posts.
+router.get("/like/:postId", auth, async (req, res) => {
+  let post = await Post.findById(req.params.postId);
+  if (!post)
+    return res
+      .status(404)
+      .send("There is no post with id: " + req.params.postId);
+
+  const likeUserId = post.likes.find((userId) => userId == req.user._id);
+
+  if (likeUserId) {
+    post.likes = post.likes.filter((userId) => userId != likeUserId);
+    await post.save();
+    res.send(post.likes);
+  } else {
+    post.likes.push(req.user._id);
+    await post.save();
+    res.send(post.likes);
+  }
 });
 
 module.exports = router;
