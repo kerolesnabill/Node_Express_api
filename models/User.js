@@ -48,6 +48,14 @@ const userSchema = new Schema({
     type: String,
     default: "default.jpg",
   },
+  following: {
+    type: [String],
+    default: [],
+  },
+  followers: {
+    type: [String],
+    default: [],
+  },
 });
 
 userSchema.methods.generateAuthToken = function () {

@@ -95,4 +95,39 @@ router.delete("/me", auth, async (req, res) => {
   res.send("The user was deleted successfully.");
 });
 
+// add or remove followers
+router.patch("/:userId/follow", auth, async (req, res) => {
+  const user = await User.findById(req.params.userId);
+  if (!user) return res.send("The user is not found.");
+
+  const me = await User.findById(req.user._id);
+  const userId = me.following.find((userId) => userId == req.params.userId);
+
+  if (userId) {
+    // Un follow
+    try {
+      const newFollowing = me.following.filter((id) => id != userId);
+      const newFollowers = user.followers.filter((id) => id != req.user._id);
+
+      await me.update({ following: newFollowing });
+      await user.update({ followers: newFollowers });
+      res.send("unfollowed");
+    } catch {
+      res.status(400).send("error");
+    }
+  } else {
+    // Follow
+    try {
+      const newFollowing = [...me.following, req.params.userId];
+      const newFollowers = [...user.followers, req.user._id];
+
+      await me.update({ following: newFollowing });
+      await user.update({ followers: newFollowers });
+      res.send("followed");
+    } catch {
+      res.status(400).send("error");
+    }
+  }
+});
+
 module.exports = router;
